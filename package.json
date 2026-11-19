@@ -1,0 +1,10 @@
+{
+  "name": "underground-soul-pinball",
+  "version": "1.0.0",
+  "description": "Balanced Undertale-inspired Pacifist pinball machine with true 36px flipper drain gap, inlanes/outlanes, slingshots, ACT->MERCY->SPARE encounters, and a low-pass filtered Felt-Piano & Music-Box WebAudio leitmotif engine.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/soul-pinball-kernel.test.mjs"
+  },
+  "license": "MIT"
+}
