@@ -22,7 +22,7 @@ const NOTE_HZ = {
 const LEITMOTIF_TRACKS = [
   {
     name: "Track 1: Ruins Hearth Lullaby (84 BPM Waltz)",
-    stepMs: 238, // Gentle 3/4 waltz quarter/eighth pulse
+    stepMs: 360, // Gentle 3/4 waltz quarter/eighth pulse
     melody: [
       "F4", "C5", "Bb4", "A4", "G4", "F4",
       "G4", "A4", "Bb4", "C5", "REST", "REST",
@@ -38,7 +38,7 @@ const LEITMOTIF_TRACKS = [
   },
   {
     name: "Track 2: Snowdin Lantern Waltz (104 BPM)",
-    stepMs: 192,
+    stepMs: 320,
     melody: [
       "C5", "A4", "F4", "C5", "D5", "C5",
       "Bb4", "G4", "E4", "Bb4", "C5", "Bb4",
@@ -54,7 +54,7 @@ const LEITMOTIF_TRACKS = [
   },
   {
     name: "Track 3: Echo Flower Reflection (76 BPM)",
-    stepMs: 263,
+    stepMs: 410,
     melody: [
       "F4", "REST", "C5", "REST", "Bb4", "A4",
       "G4", "REST", "F4", "REST", "G4", "REST",
@@ -70,7 +70,7 @@ const LEITMOTIF_TRACKS = [
   },
   {
     name: "Track 4: SOUL Resonance — True Pacifist Reprise (92 BPM)",
-    stepMs: 217,
+    stepMs: 345,
     melody: [
       "F4", "C5", "Bb4", "A4", "G4", "F4",
       "C5", "F5", "E5", "D5", "C5", "REST",
@@ -147,14 +147,14 @@ export function createGentleMusicBoxAudio() {
       // Celeste Music-Box Melody (pure sine + subtle octave shimmer)
       const melFreq = NOTE_HZ[t.melody.at(i)];
       if (melFreq > 0) {
-        playWarmNote(melFreq, "sine", 0.045, 0.012, 0.95, 1150);
+        playWarmNote(melFreq, "sine", 0.045, 0.012, 1.45, 860);
         playWarmNote(melFreq * 2, "sine", 0.012, 0.008, 0.45, 1300);
       }
 
       // Warm Felt-Piano Accompaniment (filtered triangle)
       const accFreq = NOTE_HZ[t.accompaniment.at(i)];
       if (accFreq > 0) {
-        playWarmNote(accFreq, "triangle", 0.032, 0.025, 0.85, 780);
+        playWarmNote(accFreq, "triangle", 0.032, 0.025, 1.35, 580);
       }
 
       step++;

@@ -228,16 +228,17 @@ export function stepSoulPinballFrame(state) {
     const dx = fx - cx;
     const dy = fy - cy;
     const dist = Math.hypot(dx, dy);
-    if (dist < r + 20 && dist > 0.01) {
+    const slingReady = isLeft ? nextLeftSling === 0 : nextRightSling === 0;
+    if (slingReady && dist < r + 20 && dist > 0.01) {
       fx = cx + (dx / dist) * (r + 22);
       fy = cy + (dy / dist) * (r + 22);
-      fvx = dirX * 340;
-      fvy = -310;
+      fvx = dirX * 195;
+      fvy = -185;
       score += 75 * state.realmDef.scoreMultiplier;
       lastEvent = (isLeft ? "Left" : "Right") + " Snowdin Slingshot! +75 pts";
       sfxQueue.push("SLING");
-      if (isLeft) nextLeftSling = 10;
-      else nextRightSling = 10;
+      if (isLeft) nextLeftSling = 35;
+      else nextRightSling = 35;
     }
   };
   checkSlingshot(96, 445, 1, true);
