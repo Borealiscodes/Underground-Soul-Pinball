@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Underground Soul Pinball — Balanced Pacifist Pinball &amp; Gentle Leitmotif Tribute</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>❤️ Underground Soul Pinball <span class="badge">Pacifist Tribute • Q16.16</span></h1>
+    <div id="hud-stats">Score: 0 | Spared: 0 | SOULs: 3</div>
+  </header>
+
+  <main class="underground-layout">
+    <section class="cabinet-box">
+      <div id="event-ticker" class="dialogue-ticker">* Pull Plunger (Space / Launch) to send your SOUL into The Ruins!</div>
+      <canvas id="soul-canvas" width="480" height="620"></canvas>
+
+      <div class="flipper-bar">
+        <button id="btn-left-flipper" class="flip-btn">◀ LEFT FLIPPER (A)</button>
+        <button id="btn-plunger" class="launch-btn">✦ PLUNGER</button>
+        <button id="btn-right-flipper" class="flip-btn">RIGHT FLIPPER (D) ▶</button>
+      </div>
+    </section>
+
+    <aside class="story-box">
+      <div class="undertale-frame">
+        <strong id="realm-title">Act I: The Ruins (Hearth &amp; Butterscotch Lanes)</strong>
+        <div id="guardian-label" class="guardian">* Encounter: Caretaker of the Ruins</div>
+        <p id="realm-story">A warm hearth glows behind ancient violet pillars. Strike the three [A] [C] [T] drop targets or shoot the upper Waterfall Orbit to raise Mercy to 100%, then tap the golden Guardian Bumper to SPARE!</p>
+
+        <div class="mercy-meter">
+          <div id="mercy-fill" class="mercy-fill" style="width: 0%;"></div>
+        </div>
+        <div id="mercy-text" class="mercy-label">MERCY: 0%</div>
+      </div>
+
+      <h3>Gentle SOUL Leitmotif Jukebox</h3>
+      <div id="track-label" class="track-box">Track 1: Ruins Hearth Lullaby (84 BPM Waltz)</div>
+      <div class="audio-controls">
+        <button id="btn-audio">Sound: Muted</button>
+        <button id="btn-track">⏭️ Next Leitmotif Arrangement</button>
+      </div>
+
+      <h3>Pacifist SAVE Receipt (SHA-256)</h3>
+      <button id="btn-receipt">Mint SAVE Receipt</button>
+      <textarea id="receipt-output" rows="6" readonly placeholder="Tap to generate SHA-256 Pacifist receipt..."></textarea>
+    </aside>
+  </main>
+
+  <script type="module" src="src/soul-pinball-app.js"></script>
+</body>
+</html>
