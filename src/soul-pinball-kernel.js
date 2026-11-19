@@ -326,26 +326,53 @@ export function stepSoulPinballFrame(state) {
     const segX = tipX - pivotX;
     const segY = tipY - pivotY;
     const segLenSq = segX * segX + segY * segY;
+    const t = Math.max(0, Math.min(1, ((fx - pivotX) * segX + (fy - pivotY) * segY) / segLenSq));
+    const closestX = pivotX + t * segX;
+    const closestY = pivotY + t * segY;
+    if (Math.hypot(fx - closestX, fy - closestY) < r + 6) {
+      fy = closestY - (r + 7);
+      if (isUp || justKicked) { fvy = -690 - t * 150; fvx = dir * (145 + t * 230); }
+      else { fvy = -Math.abs(fvy) * 0.5; fvx += dir * 75; }
+    }
+  };
 
-bumpers: nextBumpers,
-saveStars: nextStars,
-lastEvent,
-sfxQueue,
-};
-return sparedNow ? advanceRealmOnSpare(baseNext) : baseNext;
+  checkFlipper(LEFT_FLIPPER.pivotX, LEFT_FLIPPER.pivotY, 1, state.leftFlipperActive, leftFlipperTicks > 0);
+  checkFlipper(RIGHT_FLIPPER.pivotX, RIGHT_FLIPPER.pivotY, -1, state.rightFlipperActive, rightFlipperTicks > 0);
+
+  if (fy > TABLE_H + 16) {
+    if (ballSaveTicks > 0) {
+      return {
+        ...state, tick, score, mercyPercent, ballSaveTicks: 0,
+        soul: { xQ16: toQ16(220), yQ16: toQ16(320), vxQ16: 0, vyQ16: toQ16(-280), radius: 9, inPlungerLane: false },
+        actTargets: nextTargets, bumpers: nextBumpers, saveStars: nextStars,
+        lastEvent: "BALL SAVED! Your SOUL refused to give up!", sfxQueue: [...sfxQueue, "BALL_SAVE"],
+      };
+    }
+    const nextBalls = state.ballsRemaining > 1 ? state.ballsRemaining - 1 : 3;
+    return {
+      ...state, tick, score, mercyPercent, ballsRemaining: nextBalls, ballSaveTicks: 0,
+      soul: { xQ16: toQ16(451), yQ16: toQ16(545), vxQ16: 0, vyQ16: 0, radius: 9, inPlungerLane: true },
+      actTargets: nextTargets, bumpers: nextBumpers, saveStars: nextStars,
+      lastEvent: state.ballsRemaining > 1 ? "SOUL drained! " + nextBalls + " left — Pull Plunger!" : "Determination Restored! 3 SOULs loaded!",
+      sfxQueue: [...sfxQueue, "DRAIN"],
+    };
+  }
+
+  const baseNext = {
+    ...state, tick, score, mercyPercent, ballSaveTicks, orbitCooldownTicks: nextOrbitCd,
+    leftFlipperTicks, rightFlipperTicks, guardianFlashTicks, leftSlingFlash: nextLeftSling, rightSlingFlash: nextRightSling,
+    soul: { ...state.soul, xQ16: toQ16(fx), yQ16: toQ16(fy), vxQ16: toQ16(fvx), vyQ16: toQ16(fvy) },
+    actTargets: nextTargets, bumpers: nextBumpers, saveStars: nextStars, lastEvent, sfxQueue,
+  };
+  return sparedNow ? advanceRealmOnSpare(baseNext) : baseNext;
 }
+
 export function buildPacifistReceipt(state) {
-const payload = {
-schema: "ndh.underground.soul.pinball.v1",
-realmReached: state.realmIndex + 1,
-realmSlug: state.realmDef.slug,
-guardiansSpared: state.sparedCount,
-score: state.score,
-mercyPercent: state.mercyPercent,
-activeLeitmotif: state.realmDef.trackName,
-};
-return {
-...payload,
-sha256: sha256Hex(JSON.stringify(payload)),
-};
+  const payload = {
+    schema: "ndh.underground.soul.pinball.v1",
+    realmReached: state.realmIndex + 1, realmSlug: state.realmDef.slug,
+    guardiansSpared: state.sparedCount, score: state.score,
+    mercyPercent: state.mercyPercent, activeLeitmotif: state.realmDef.trackName,
+  };
+  return { ...payload, sha256: sha256Hex(JSON.stringify(payload)) };
 }
