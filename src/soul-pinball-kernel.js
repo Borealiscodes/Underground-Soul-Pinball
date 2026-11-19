@@ -1,27 +1,12 @@
-/**
- * src/soul-pinball-kernel.js — Balanced Q16.16 Multi-Zone Pinball Physics & Pacifist ACT->MERCY->SPARE Kernel (Ledger 1)
- * Features:
- *   - 480x620 table with 436px playfield + 44px plunger lane
- *   - True skill-based 36px center flipper gap (Left tip x=202, Right tip x=238) vs. 18px SOUL orb (r=9)
- *   - Left/Right return inlanes (x=66..106 and x=334..374) & risky outer drain outlanes (x=24..62 and x=378..416)
- *   - 12-second Ball Save timer on plunger launch
- *   - Triangular Slingshot Kickers above flippers
- *   - [A] [C] [T] Drop Targets (+25% Mercy each) + Upper Orbit Rollover (+25% Mercy) -> Golden SPARE Guardian Bumper
- *
- * Signed-off-by: Borealis Serenity Hedling <chguard-sentinel@vaked.dev>
- */
-
 import { toQ16, fromQ16, qAdd, qMul, sha256Hex } from "./core.js";
 import { UNDERGROUND_REALMS, ACT_TARGETS, HEARTH_BUMPERS } from "./underground-acts-data.js";
 
 export const TABLE_W = 480;
 export const TABLE_H = 620;
-export const PLAYFIELD_RIGHT = 434; // x = 434..468 is the plunger lane
+export const PLAYFIELD_RIGHT = 434;
 
-// Balanced Flipper Geometry: pivotX=134 (+68 => tip=202) and pivotX=306 (-68 => tip=238) -> 36px center drain gap!
 export const LEFT_FLIPPER = { pivotX: 134, pivotY: 540, length: 68 };
 export const RIGHT_FLIPPER = { pivotX: 306, pivotY: 540, length: 68 };
-
 export const GUARDIAN_BUMPER = { x: 220, y: 205, r: 30 };
 
 export function createSoulPinballState() {
@@ -31,16 +16,16 @@ export function createSoulPinballState() {
     realmDef: UNDERGROUND_REALMS.at(0),
     score: 0,
     sparedCount: 0,
-    mercyPercent: 0, // 0 .. 100
+    mercyPercent: 0,
     ballsRemaining: 3,
-    ballSaveTicks: 0, // 720 ticks = 12 seconds at 60 Hz
+    ballSaveTicks: 0,
     orbitCooldownTicks: 0,
     soul: {
       xQ16: toQ16(451),
       yQ16: toQ16(545),
       vxQ16: 0,
       vyQ16: 0,
-      radius: 9, // 18px diameter vs. 36px flipper gap
+      radius: 9,
       inPlungerLane: true,
     },
     leftFlipperActive: false,
@@ -54,7 +39,7 @@ export function createSoulPinballState() {
     rightSlingFlash: 0,
     saveStars: [],
     lastEvent: "Pull Plunger (Space / Launch) to send your SOUL into The Ruins!",
-    sfxQueue: [], // ["PLUNGER", "FLIPPER", "ACT_HIT", "BUMPER", "SLING", "SPARE", "BALL_SAVE", "DRAIN"]
+    sfxQueue: [],
   };
 }
 
@@ -78,10 +63,10 @@ export function setFlipperState(state, side, active) {
 }
 
 export function launchSoulPlunger(state) {
-  if (!state.ballInPlunger && !state.soul.inPlungerLane) return state;
+  if (!state.soul.inPlungerLane) return state;
   return {
     ...state,
-    ballSaveTicks: 720, // 12 seconds of Ball Save protection
+    ballSaveTicks: 720,
     soul: {
       ...state.soul,
       vxQ16: toQ16(-85),
@@ -189,12 +174,10 @@ export function stepSoulPinballFrame(state) {
   let nextLeftSling = leftSlingFlash;
   let nextRightSling = rightSlingFlash;
 
-  // 1. Top Curved Arch & Side Cabinet Walls
   if (fy < 42 + r) {
     fy = 42 + r;
     fvy = Math.abs(fvy) * 0.78;
     if (fx > 360) fvx -= 155;
-    // Upper Waterfall Orbit Loop Rollover (+25% Mercy)
     if (fx >= 165 && fx <= 275 && nextOrbitCd === 0) {
       nextOrbitCd = 90;
       mercyPercent = Math.min(100, mercyPercent + 25);
@@ -215,10 +198,7 @@ export function stepSoulPinballFrame(state) {
     fvx = -Math.abs(fvx) * 0.82;
   }
 
-  // 2. Return Inlanes vs. Outer Drain Outlanes (y = 435..545)
-  // Divider walls at x = 62 (Left) and x = 378 (Right) separate Outlanes (drain) from Inlanes (feed flippers)
   if (fy > 435 && fy < 548) {
-    // Left divider wall at x = 62
     if (Math.abs(fx - 62) < r + 2) {
       if (fx >= 62) {
         fx = 62 + r + 2;
@@ -228,7 +208,6 @@ export function stepSoulPinballFrame(state) {
         fvx = -Math.abs(fvx) * 0.65;
       }
     }
-    // Right divider wall at x = 378
     if (Math.abs(fx - 378) < r + 2) {
       if (fx <= 378) {
         fx = 378 - r - 2;
@@ -238,7 +217,6 @@ export function stepSoulPinballFrame(state) {
         fvx = Math.abs(fvx) * 0.65;
       }
     }
-    // Inlane funnels guiding ball smoothly to Left (134) & Right (306) flipper pivots
     if (fx > 64 && fx < LEFT_FLIPPER.pivotX && fy > 495) {
       fvx += 24;
     } else if (fx > RIGHT_FLIPPER.pivotX && fx < 376 && fy > 495) {
@@ -246,7 +224,6 @@ export function stepSoulPinballFrame(state) {
     }
   }
 
-  // 3. Left & Right Triangular Slingshot Kickers (above inlanes)
   const checkSlingshot = (cx, cy, dirX, isLeft) => {
     const dx = fx - cx;
     const dy = fy - cy;
@@ -266,7 +243,6 @@ export function stepSoulPinballFrame(state) {
   checkSlingshot(96, 445, 1, true);
   checkSlingshot(344, 445, -1, false);
 
-  // 4. [A] [C] [T] Pacifist Drop Targets (+25% Mercy each)
   nextTargets = nextTargets.map((t) => {
     const dx = fx - t.x;
     const dy = fy - t.y;
@@ -299,36 +275,58 @@ export function stepSoulPinballFrame(state) {
     return t;
   });
 
-  // 5. Hearth & Kindness Bumpers
   nextBumpers = nextBumpers.map((b) => {
     const dx = fx - b.x;
     const dy = fy - b.y;
     const dist = Math.hypot(dx, dy);
-saveStars: nextStars,
-lastEvent: drainMsg,
-sfxQueue: [...sfxQueue, "DRAIN"],
-};
-}
-const baseNext = {
-...state,
-tick,
-score,
-mercyPercent,
-ballSaveTicks,
-orbitCooldownTicks: nextOrbitCd,
-leftFlipperTicks,
-rightFlipperTicks,
-guardianFlashTicks,
-leftSlingFlash: nextLeftSling,
-rightSlingFlash: nextRightSling,
-soul: {
-...state.soul,
-xQ16: toQ16(fx),
-yQ16: toQ16(fy),
-vxQ16: toQ16(fvx),
-vyQ16: toQ16(fvy),
-},
-actTargets: nextTargets,
+    if (dist < b.r + r && dist > 0.001) {
+      const nx = dx / dist;
+      const ny = dy / dist;
+      fx = b.x + nx * (b.r + r + 1);
+      fy = b.y + ny * (b.r + r + 1);
+      const spd = Math.max(360, Math.hypot(fvx, fvy) * 1.1);
+      fvx = nx * spd;
+      fvy = ny * spd;
+      const pts = b.points * state.realmDef.scoreMultiplier;
+      score += pts;
+      mercyPercent = Math.min(100, mercyPercent + 10);
+      lastEvent = b.label + " Bumper! +" + pts + " pts • Mercy: " + mercyPercent + "%";
+      sfxQueue.push("BUMPER");
+      return { ...b, flashTicks: 12 };
+    }
+    return b;
+  });
+
+  const gdx = fx - GUARDIAN_BUMPER.x;
+  const gdy = fy - GUARDIAN_BUMPER.y;
+  const gdist = Math.hypot(gdx, gdy);
+  let sparedNow = false;
+  if (gdist < GUARDIAN_BUMPER.r + r && gdist > 0.001) {
+    const nx = gdx / gdist;
+    const ny = gdy / gdist;
+    fx = GUARDIAN_BUMPER.x + nx * (GUARDIAN_BUMPER.r + r + 2);
+    fy = GUARDIAN_BUMPER.y + ny * (GUARDIAN_BUMPER.r + r + 2);
+    const spd = Math.max(380, Math.hypot(fvx, fvy) * 1.12);
+    fvx = nx * spd;
+    fvy = ny * spd;
+
+    if (mercyPercent >= 100) {
+      sparedNow = true;
+    } else {
+      const pts = 200 * state.realmDef.scoreMultiplier;
+      score += pts;
+      lastEvent = state.realmDef.guardianName + " (Mercy " + mercyPercent + "% — reach 100% to SPARE!)";
+      sfxQueue.push("BUMPER");
+    }
+  }
+
+  const checkFlipper = (pivotX, pivotY, dir, isUp, justKicked) => {
+    const tipX = pivotX + dir * LEFT_FLIPPER.length;
+    const tipY = isUp ? pivotY - 28 : pivotY + 18;
+    const segX = tipX - pivotX;
+    const segY = tipY - pivotY;
+    const segLenSq = segX * segX + segY * segY;
+
 bumpers: nextBumpers,
 saveStars: nextStars,
 lastEvent,
